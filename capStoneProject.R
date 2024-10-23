@@ -58,56 +58,99 @@ all_data <- all_data %>%
                             ,"Customer" = "casual")) %>%
                             filter(usertype != "Dependent", !is.na(start_time), start_station_name != "HQ QR")
 
-# ANALYSIS
-# average trip duration and totaltrips per usertype and per weekday
+# START ANALYSIS
+
+#Table - average trip duration and totaltrips per usertype and per weekday
 all_data %>% 
     group_by(usertype,start_week_day) %>%
     summarise(average_trip_duration=mean(tripduration),
             total_trips = n()) %>%
             arrange(usertype, start_week_day)
-
-# average trip duration per usertype and weekday in pivot table
+#Table - average trip duration per usertype and weekday in pivot table
 all_data %>% 
     group_by(usertype,start_week_day) %>%
     summarise(average_trip_duration=mean(tripduration)) %>%
     pivot_wider(names_from = start_week_day, values_from = average_trip_duration)
 
-# totaltrips per usertype and weekday in pivot table
-all_data %>% 
-    group_by(usertype,start_week_day) %>%
-    summarise(total_trips=n()) %>%
-    pivot_wider(names_from = start_week_day, values_from = total_trips)
-
-# comparison casual vrs member on average trip duration per year per month
+#Table - comparison casual vrs member on average trip duration per year per month
 all_data %>% 
     group_by(usertype, start_year, start_month) %>%
     summarise(average_trip_duration=mean(tripduration)) %>%
     pivot_wider(names_from = c(start_year, start_month), values_from = average_trip_duration)
 
-#Graph
+#Table - totaltrips per usertype and weekday in pivot table
 all_data %>% 
-    group_by(usertype, start_year, start_month) %>%
-    summarise(average_trip_duration=mean(tripduration)) %>%
-    ggplot(aes(x = start_year, y = average_trip_duration, fill = start_month)) +
-    geom_bar(stat='identity') +
-    facet_wrap(~usertype)
+    group_by(usertype,start_week_day) %>%
+    summarise(total_trips=n()) %>%
+    pivot_wider(names_from = start_week_day, values_from = total_trips)
 
-# comparison casual vrs member on totalTrips per year from 2018 to 2024
+#Table - comparison casual vrs member on totalTrips per year from 2018 to 2024 pero usertype
 all_data %>% 
     group_by(usertype,start_year) %>%
     summarise(total_trips = n()) %>%
     pivot_wider(names_from = start_year, values_from = total_trips)
 
-#Graph
-all_data %>% 
-    group_by(usertype,start_year) %>%
-    summarise(total_trips = n()) %>%
-ggplot(aes(x = start_year, y = total_trips)) +
-    geom_bar(stat='identity') +
-    facet_wrap(~usertype)
-
-# comparison casual vrs member on totalTrips per year per month
+#Table - comparison casual vrs member on totalTrips per year per month
 all_data %>% 
     group_by(usertype,start_year,start_month) %>%
     summarise(total_trips = n()) %>%
     pivot_wider(names_from = c(start_year,start_month), values_from = total_trips)
+
+# END ANALYSIS
+
+
+#START GRAPHS
+
+#1 Graph Column: Average Trip Duration per usertype and Weekday**
+all_data %>%
+    group_by(usertype, start_week_day) %>%
+    summarise(average_trip_duration=mean(tripduration)) %>%
+    arrange(usertype, start_week_day) %>%
+    ggplot(aes(x = start_week_day, y = average_trip_duration, fill = usertype)) +
+    geom_col(position = "dodge") +
+    labs(title="Average Trip Duration per usertype and Weekday")
+
+#2 Graph Column: Average Trip duration  per UserType and year**
+all_data %>%
+    group_by(usertype, start_year) %>%
+    summarise(average_trip_duration=mean(tripduration)) %>%
+    ggplot(aes(x = start_year, y = average_trip_duration, fill = usertype)) +
+    geom_col(position = "dodge") +
+    labs(title="Average Trip Duration per usertype and year")
+
+#3 Graph Column: Average Trip duration per UserType, month and year
+all_data %>% 
+    group_by(usertype, start_year, start_month) %>%
+    summarise(average_trip_duration=mean(tripduration)) %>%
+    ggplot(aes(x = start_month, y = average_trip_duration, fill = usertype)) +
+    geom_col(position = "dodge") +
+    facet_wrap(~start_year) +
+    labs(title="Average Trip Duration per usertype, month and year")
+
+#4 Graph Column: Number of trips  per UserType and week day**
+all_data %>%
+    group_by(usertype, start_week_day) %>%
+    summarise(total_trips = n()) %>%
+    arrange(usertype, start_week_day) %>%
+    ggplot(aes(x = start_week_day, y = total_trips, fill = usertype)) +
+    geom_col(position = "dodge") +
+    labs(title="Number of trips  per UserType and week day")
+
+#5 Graph Column: Number of trips per UserType and year
+all_data %>%
+    group_by(usertype, start_year) %>%
+    summarise(number_of_rides = n()) %>%
+    ggplot(aes(x = start_year, y = number_of_rides, fill = usertype)) +
+    geom_col(position = "dodge") +
+    labs(title="Number of trips per UserType and year")
+
+#6 Graph Line: Number of trips  per UserType, month and year**
+all_data %>% 
+    group_by(usertype,start_year,start_month) %>%
+    summarise(total_trips = n()) %>%
+    ggplot(aes(x = start_month, y = total_trips, group = 1)) +
+    geom_line(aes(color=usertype, group=usertype)) +
+    facet_wrap(~start_year) +
+    labs(title="Number of trips per UserType, month and year")
+
+ggsave("numberTrips_month_year.png", width = 12, height = 10)
